@@ -73,7 +73,7 @@ namespace Deasciifier
                 else
                 {
                     result.AddWord(word);
-                    previousRoot = fsmParses.GetFsmParse(0).GetWord();
+                    previousRoot = fsmParses.GetParseWithLongestRootWord().GetWord();
                 }
             }
 
