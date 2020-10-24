@@ -23,6 +23,23 @@ namespace Deasciifier
         }
 
         /**
+        * <summary>Checks the morphological analysis of the given word in the given index. If there is no misspelling, it returns
+        * the longest root word of the possible analyses.</summary>
+        * <param name="sentence"> Sentence to be analyzed.</param>
+        * <param name="index"> Index of the word</param>
+        * <returns> If the word is misspelled, null; otherwise the longest root word of the possible analyses.</returns>
+        */
+        private Word CheckAnalysisAndSetRoot(Sentence sentence, int index){
+            if (index < sentence.WordCount()){
+                var fsmParses = fsm.MorphologicalAnalysis(sentence.GetWord(index).GetName());
+                if (fsmParses.Size() != 0){
+                    return fsmParses.GetParseWithLongestRootWord().GetWord();
+                }
+            }
+            return null;
+        }
+
+        /**
          * <summary>The deasciify method takes a {@link Sentence} as an input. First it creates a string {@link List} as candidates,
          * and a {@link Sentence} result. Then, loops i times where i ranges from 0 to words size of given sentence. It gets the
          * current word and generates a candidateList with this current word then, it loops through the candidateList. First it
@@ -35,48 +52,49 @@ namespace Deasciifier
          */
         public new Sentence Deasciify(Sentence sentence)
         {
-            Word previousRoot = null;
+            Word previousRoot = null, root, nextRoot;
+            FsmParseList fsmParses;
+            double previousProbability, nextProbability, bestProbability;
             var result = new Sentence();
+            root = CheckAnalysisAndSetRoot(sentence, 0);
+            nextRoot = CheckAnalysisAndSetRoot(sentence, 1);
             for (var i = 0; i < sentence.WordCount(); i++)
             {
                 var word = sentence.GetWord(i);
-                var fsmParses = fsm.MorphologicalAnalysis(word.GetName());
-                if (fsmParses.Size() == 0)
+                if (root == null)
                 {
                     var candidates = CandidateList(word);
                     var bestCandidate = word.GetName();
                     var bestRoot = word;
-                    double bestProbability = 0;
+                    bestProbability = 0;
                     foreach (var candidate in candidates) {
-                        var fsmParseList = fsm.MorphologicalAnalysis(candidate);
-                        var root = fsmParseList.GetFsmParse(0).GetWord();
-                        double probability;
-                        if (previousRoot != null)
-                        {
-                            probability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
+                        fsmParses = fsm.MorphologicalAnalysis(candidate);
+                        root = fsmParses.GetParseWithLongestRootWord().GetWord();
+                        if (previousRoot != null) {
+                            previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
+                        } else {
+                            previousProbability = 0.0;
                         }
-                        else
-                        {
-                            probability = nGram.GetProbability(root.GetName());
+                        if (nextRoot != null) {
+                            nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
+                        } else {
+                            nextProbability = 0.0;
                         }
-
-                        if (probability > bestProbability)
-                        {
+                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability) {
                             bestCandidate = candidate;
                             bestRoot = root;
-                            bestProbability = probability;
+                            bestProbability = System.Math.Max(previousProbability, nextProbability);
                         }
                     }
-                    previousRoot = bestRoot;
+                    root = bestRoot;
                     result.AddWord(new Word(bestCandidate));
-                }
-                else
-                {
+                } else {
                     result.AddWord(word);
-                    previousRoot = fsmParses.GetParseWithLongestRootWord().GetWord();
                 }
+                previousRoot = root;
+                root = nextRoot;
+                nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
             }
-
             return result;
         }
     }
