@@ -1,4 +1,3 @@
-using System;
 using Corpus;
 using Deasciifier;
 using MorphologicalAnalysis;
@@ -15,7 +14,7 @@ namespace Test
             var fsm = new FsmMorphologicalAnalyzer();
             var nGram = new NGram<string>("../../../ngram.txt");
             nGram.CalculateNGramProbabilities(new NoSmoothing<string>());
-            var nGramDeasciifier = new NGramDeasciifier(fsm, nGram);
+            var nGramDeasciifier = new NGramDeasciifier(fsm, nGram, true);
             var simpleAsciifier = new SimpleAsciifier();
             var corpus = new Corpus.Corpus("../../../corpus.txt");
             for (var i = 0; i < corpus.SentenceCount(); i++)
@@ -35,6 +34,18 @@ namespace Test
                     }
                 }
             }
+        }
+
+        [Test]
+        public void TestDeasciify2()
+        {
+            var fsm = new FsmMorphologicalAnalyzer();
+            var nGram = new NGram<string>("../../../ngram.txt");
+            nGram.CalculateNGramProbabilities(new NoSmoothing<string>());
+            var nGramDeasciifier = new NGramDeasciifier(fsm, nGram, false);
+            Assert.AreEqual("noter hakkında", nGramDeasciifier.Deasciify(new Sentence("noter hakkinda")).ToString());
+            Assert.AreEqual("sandık medrese", nGramDeasciifier.Deasciify(new Sentence("sandik medrese")).ToString());
+            Assert.AreEqual("kuran'ı karşılıklı", nGramDeasciifier.Deasciify(new Sentence("kuran'ı karsilikli")).ToString());
         }
     }
 }

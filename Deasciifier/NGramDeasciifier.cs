@@ -8,6 +8,7 @@ namespace Deasciifier
     public class NGramDeasciifier : SimpleDeasciifier
     {
         private NGram<string> nGram;
+        private bool rootNGram;
 
         /**
          * <summary>A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
@@ -16,10 +17,12 @@ namespace Deasciifier
          *
          * <param name="fsm">  {@link FsmMorphologicalAnalyzer} type input.</param>
          * <param name="nGram">{@link NGram} type input.</param>
+         * <param name="rootNGram">True if the NGram is root nGram</param>
          */
-        public NGramDeasciifier(FsmMorphologicalAnalyzer fsm, NGram<string> nGram) : base(fsm)
+        public NGramDeasciifier(FsmMorphologicalAnalyzer fsm, NGram<string> nGram, bool rootNGram) : base(fsm)
         {
             this.nGram = nGram;
+            this.rootNGram = rootNGram;
         }
 
         /**
@@ -29,13 +32,22 @@ namespace Deasciifier
         * <param name="index"> Index of the word</param>
         * <returns> If the word is misspelled, null; otherwise the longest root word of the possible analyses.</returns>
         */
-        private Word CheckAnalysisAndSetRoot(Sentence sentence, int index){
-            if (index < sentence.WordCount()){
+        private Word CheckAnalysisAndSetRoot(Sentence sentence, int index)
+        {
+            if (index < sentence.WordCount())
+            {
                 var fsmParses = fsm.MorphologicalAnalysis(sentence.GetWord(index).GetName());
-                if (fsmParses.Size() != 0){
-                    return fsmParses.GetParseWithLongestRootWord().GetWord();
+                if (fsmParses.Size() != 0)
+                {
+                    if (rootNGram)
+                    {
+                        return fsmParses.GetParseWithLongestRootWord().GetWord();
+                    }
+
+                    return sentence.GetWord(index);
                 }
             }
+
             return null;
         }
 
@@ -67,34 +79,57 @@ namespace Deasciifier
                     var bestCandidate = word.GetName();
                     var bestRoot = word;
                     bestProbability = 0;
-                    foreach (var candidate in candidates) {
+                    foreach (var candidate in candidates)
+                    {
                         fsmParses = fsm.MorphologicalAnalysis(candidate);
-                        root = fsmParses.GetParseWithLongestRootWord().GetWord();
-                        if (previousRoot != null) {
+                        if (rootNGram)
+                        {
+                            root = fsmParses.GetParseWithLongestRootWord().GetWord();
+                        }
+                        else
+                        {
+                            root = new Word(candidate);
+                        }
+
+                        if (previousRoot != null)
+                        {
                             previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
-                        } else {
+                        }
+                        else
+                        {
                             previousProbability = 0.0;
                         }
-                        if (nextRoot != null) {
+
+                        if (nextRoot != null)
+                        {
                             nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
-                        } else {
+                        }
+                        else
+                        {
                             nextProbability = 0.0;
                         }
-                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability) {
+
+                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
+                        {
                             bestCandidate = candidate;
                             bestRoot = root;
                             bestProbability = System.Math.Max(previousProbability, nextProbability);
                         }
                     }
+
                     root = bestRoot;
                     result.AddWord(new Word(bestCandidate));
-                } else {
+                }
+                else
+                {
                     result.AddWord(word);
                 }
+
                 previousRoot = root;
                 root = nextRoot;
                 nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
             }
+
             return result;
         }
     }
