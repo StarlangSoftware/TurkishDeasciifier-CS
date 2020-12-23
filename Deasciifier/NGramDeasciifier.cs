@@ -9,6 +9,7 @@ namespace Deasciifier
     {
         private NGram<string> nGram;
         private bool rootNGram;
+        private double threshold = 0.0;
 
         /**
          * <summary>A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
@@ -51,6 +52,11 @@ namespace Deasciifier
             return null;
         }
 
+        public void SetThreshold(double threshold)
+        {
+            this.threshold = threshold;
+        }
+
         /**
          * <summary>The deasciify method takes a {@link Sentence} as an input. First it creates a string {@link List} as candidates,
          * and a {@link Sentence} result. Then, loops i times where i ranges from 0 to words size of given sentence. It gets the
@@ -78,7 +84,7 @@ namespace Deasciifier
                     var candidates = CandidateList(word);
                     var bestCandidate = word.GetName();
                     var bestRoot = word;
-                    bestProbability = 0;
+                    bestProbability = threshold;
                     foreach (var candidate in candidates)
                     {
                         fsmParses = fsm.MorphologicalAnalysis(candidate);
