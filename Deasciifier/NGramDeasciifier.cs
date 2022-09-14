@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using Corpus;
 using Dictionary.Dictionary;
 using MorphologicalAnalysis;
@@ -10,6 +12,7 @@ namespace Deasciifier
         private NGram<string> nGram;
         private bool rootNGram;
         private double threshold = 0.0;
+        private Dictionary<string, string> asciifiedSame = new Dictionary<string, string>();
 
         /**
          * <summary>A constructor of {@link NGramDeasciifier} class which takes an {@link FsmMorphologicalAnalyzer} and an {@link NGram}
@@ -24,6 +27,7 @@ namespace Deasciifier
         {
             this.nGram = nGram;
             this.rootNGram = rootNGram;
+            LoadAsciifiedSameList();
         }
 
         /**
@@ -72,71 +76,113 @@ namespace Deasciifier
         {
             Word previousRoot = null, root, nextRoot;
             FsmParseList fsmParses;
+            bool isAsciifiedSame;
+            List<string> candidates;
             double previousProbability, nextProbability, bestProbability;
             var result = new Sentence();
             root = CheckAnalysisAndSetRoot(sentence, 0);
             nextRoot = CheckAnalysisAndSetRoot(sentence, 1);
-            for (var i = 0; i < sentence.WordCount(); i++)
+            for (var repeat = 0; repeat < 2; repeat++)
             {
-                var word = sentence.GetWord(i);
-                if (root == null)
+                for (var i = 0; i < sentence.WordCount(); i++)
                 {
-                    var candidates = CandidateList(word);
-                    var bestCandidate = word.GetName();
-                    var bestRoot = word;
-                    bestProbability = threshold;
-                    foreach (var candidate in candidates)
+                    candidates = new List<string>();
+                    isAsciifiedSame = false;
+                    var word = sentence.GetWord(i);
+                    if (asciifiedSame.ContainsKey(word.GetName()))
                     {
-                        fsmParses = fsm.MorphologicalAnalysis(candidate);
-                        if (rootNGram)
+                        candidates.Add(word.GetName());
+                        candidates.Add(asciifiedSame[word.GetName()]);
+                        isAsciifiedSame = true;
+                    }
+                    if (root == null || isAsciifiedSame)
+                    {
+                        if (!isAsciifiedSame)
                         {
-                            root = fsmParses.GetParseWithLongestRootWord().GetWord();
+                            candidates = CandidateList(word);
                         }
-                        else
+                        var bestCandidate = word.GetName();
+                        var bestRoot = word;
+                        bestProbability = threshold;
+                        foreach (var candidate in candidates)
                         {
-                            root = new Word(candidate);
+                            fsmParses = fsm.MorphologicalAnalysis(candidate);
+                            if (rootNGram)
+                            {
+                                root = fsmParses.GetParseWithLongestRootWord().GetWord();
+                            }
+                            else
+                            {
+                                root = new Word(candidate);
+                            }
+
+                            if (previousRoot != null)
+                            {
+                                previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
+                            }
+                            else
+                            {
+                                previousProbability = 0.0;
+                            }
+
+                            if (nextRoot != null)
+                            {
+                                nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
+                            }
+                            else
+                            {
+                                nextProbability = 0.0;
+                            }
+
+                            if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
+                            {
+                                bestCandidate = candidate;
+                                bestRoot = root;
+                                bestProbability = System.Math.Max(previousProbability, nextProbability);
+                            }
                         }
 
-                        if (previousRoot != null)
-                        {
-                            previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
-                        }
-                        else
-                        {
-                            previousProbability = 0.0;
-                        }
-
-                        if (nextRoot != null)
-                        {
-                            nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
-                        }
-                        else
-                        {
-                            nextProbability = 0.0;
-                        }
-
-                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
-                        {
-                            bestCandidate = candidate;
-                            bestRoot = root;
-                            bestProbability = System.Math.Max(previousProbability, nextProbability);
-                        }
+                        root = bestRoot;
+                        result.AddWord(new Word(bestCandidate));
+                    }
+                    else
+                    {
+                        result.AddWord(word);
                     }
 
-                    root = bestRoot;
-                    result.AddWord(new Word(bestCandidate));
+                    previousRoot = root;
+                    root = nextRoot;
+                    nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
                 }
-                else
+
+                sentence = result;
+                if (repeat < 1)
                 {
-                    result.AddWord(word);
+                    result = new Sentence();
+                    previousRoot = null;
+                    root = CheckAnalysisAndSetRoot(sentence, 0);
+                    nextRoot = CheckAnalysisAndSetRoot(sentence, 1);
+                }
+            }
+            return result;
+        }
+
+        public void LoadAsciifiedSameList()
+        {
+            var assembly = typeof(Deasciifier).Assembly;
+            var stream = assembly.GetManifestResourceStream("Deasciifier.asciified-same.txt");
+            var streamReader = new StreamReader(stream);
+            var line = streamReader.ReadLine();
+            while (line != null)
+            {
+                var list = line.Split(" ");
+                if (list.Length > 0)
+                {
+                    asciifiedSame[list[0]] = list[1];
                 }
 
-                previousRoot = root;
-                root = nextRoot;
-                nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
+                line = streamReader.ReadLine();
             }
-
-            return result;
         }
     }
 }
