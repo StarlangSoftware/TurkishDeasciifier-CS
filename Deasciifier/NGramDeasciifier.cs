@@ -82,88 +82,79 @@ namespace Deasciifier
             var result = new Sentence();
             root = CheckAnalysisAndSetRoot(sentence, 0);
             nextRoot = CheckAnalysisAndSetRoot(sentence, 1);
-            for (var repeat = 0; repeat < 2; repeat++)
+            for (var i = 0; i < sentence.WordCount(); i++)
             {
-                for (var i = 0; i < sentence.WordCount(); i++)
+                candidates = new List<string>();
+                isAsciifiedSame = false;
+                var word = sentence.GetWord(i);
+                if (asciifiedSame.ContainsKey(word.GetName()))
                 {
-                    candidates = new List<string>();
-                    isAsciifiedSame = false;
-                    var word = sentence.GetWord(i);
-                    if (asciifiedSame.ContainsKey(word.GetName()))
-                    {
-                        candidates.Add(word.GetName());
-                        candidates.Add(asciifiedSame[word.GetName()]);
-                        isAsciifiedSame = true;
-                    }
-                    if (root == null || isAsciifiedSame)
-                    {
-                        if (!isAsciifiedSame)
-                        {
-                            candidates = CandidateList(word);
-                        }
-                        var bestCandidate = word.GetName();
-                        var bestRoot = word;
-                        bestProbability = threshold;
-                        foreach (var candidate in candidates)
-                        {
-                            fsmParses = fsm.MorphologicalAnalysis(candidate);
-                            if (rootNGram)
-                            {
-                                root = fsmParses.GetParseWithLongestRootWord().GetWord();
-                            }
-                            else
-                            {
-                                root = new Word(candidate);
-                            }
-
-                            if (previousRoot != null)
-                            {
-                                previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
-                            }
-                            else
-                            {
-                                previousProbability = 0.0;
-                            }
-
-                            if (nextRoot != null)
-                            {
-                                nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
-                            }
-                            else
-                            {
-                                nextProbability = 0.0;
-                            }
-
-                            if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
-                            {
-                                bestCandidate = candidate;
-                                bestRoot = root;
-                                bestProbability = System.Math.Max(previousProbability, nextProbability);
-                            }
-                        }
-
-                        root = bestRoot;
-                        result.AddWord(new Word(bestCandidate));
-                    }
-                    else
-                    {
-                        result.AddWord(word);
-                    }
-
-                    previousRoot = root;
-                    root = nextRoot;
-                    nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
+                    candidates.Add(word.GetName());
+                    candidates.Add(asciifiedSame[word.GetName()]);
+                    isAsciifiedSame = true;
                 }
 
-                sentence = result;
-                if (repeat < 1)
+                if (root == null || isAsciifiedSame)
                 {
-                    result = new Sentence();
-                    previousRoot = null;
-                    root = CheckAnalysisAndSetRoot(sentence, 0);
-                    nextRoot = CheckAnalysisAndSetRoot(sentence, 1);
+                    if (!isAsciifiedSame)
+                    {
+                        candidates = CandidateList(word);
+                    }
+
+                    var bestCandidate = word.GetName();
+                    var bestRoot = word;
+                    bestProbability = threshold;
+                    foreach (var candidate in candidates)
+                    {
+                        fsmParses = fsm.MorphologicalAnalysis(candidate);
+                        if (rootNGram)
+                        {
+                            root = fsmParses.GetParseWithLongestRootWord().GetWord();
+                        }
+                        else
+                        {
+                            root = new Word(candidate);
+                        }
+
+                        if (previousRoot != null)
+                        {
+                            previousProbability = nGram.GetProbability(previousRoot.GetName(), root.GetName());
+                        }
+                        else
+                        {
+                            previousProbability = 0.0;
+                        }
+
+                        if (nextRoot != null)
+                        {
+                            nextProbability = nGram.GetProbability(root.GetName(), nextRoot.GetName());
+                        }
+                        else
+                        {
+                            nextProbability = 0.0;
+                        }
+
+                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
+                        {
+                            bestCandidate = candidate;
+                            bestRoot = root;
+                            bestProbability = System.Math.Max(previousProbability, nextProbability);
+                        }
+                    }
+
+                    root = bestRoot;
+                    result.AddWord(new Word(bestCandidate));
                 }
+                else
+                {
+                    result.AddWord(word);
+                }
+
+                previousRoot = root;
+                root = nextRoot;
+                nextRoot = CheckAnalysisAndSetRoot(sentence, i + 2);
             }
+
             return result;
         }
 

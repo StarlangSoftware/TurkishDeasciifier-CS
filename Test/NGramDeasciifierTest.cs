@@ -55,8 +55,8 @@ namespace Test
             var nGram = new NGram<string>("../../../ngram.txt");
             nGram.CalculateNGramProbabilities(new LaplaceSmoothing<string>());
             var nGramDeasciifier = new NGramDeasciifier(fsm, nGram, true);
-            Assert.AreEqual("dün akşam yeni aldığımız çam ağacını süsledik", nGramDeasciifier.Deasciify(new Sentence("dün aksam yenı aldıgımız cam agacini susledık")).ToString());
-            Assert.AreEqual("ünlü sanatçı tartışmalı konu hakkında demeç vermekten kaçındı", nGramDeasciifier.Deasciify(new Sentence("unlu sanatci tartismali konu hakkinda demec vermekten kacindi")).ToString());
+            Assert.AreEqual("dün akşam yeni aldığımız çam ağacını süsledik", nGramDeasciifier.Deasciify(new Sentence("dün aksam yenı aldıgımız cam ağacını susledık")).ToString());
+            Assert.AreEqual("ünlü sanatçı tartışmalı konu hakkında demeç vermekten kaçındı", nGramDeasciifier.Deasciify(new Sentence("unlu sanatçı tartismali konu hakkinda demec vermekten kacindi")).ToString());
             Assert.AreEqual("köylü de durumdan oldukça şikayetçiydi", nGramDeasciifier.Deasciify(new Sentence("koylu de durumdan oldukca şikayetciydi")).ToString());
         }
 
