@@ -134,7 +134,7 @@ namespace Deasciifier
                             nextProbability = 0.0;
                         }
 
-                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability)
+                        if (System.Math.Max(previousProbability, nextProbability) > bestProbability || candidates.Count == 1)
                         {
                             bestCandidate = candidate;
                             bestRoot = root;
