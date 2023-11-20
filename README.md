@@ -11,7 +11,7 @@ Video Lectures
 For Developers
 ============
 
-You can also see [Java](https://github.com/starlangsoftware/TurkishDeasciifier), [Python](https://github.com/starlangsoftware/TurkishDeasciifier-Py), [Cython](https://github.com/starlangsoftware/TurkishDeasciifier-Cy), [Swift](https://github.com/starlangsoftware/TurkishDeasciifier-Swift), [Js](https://github.com/starlangsoftware/TurkishDeasciifier-Js), or [C++](https://github.com/starlangsoftware/TurkishDeasciifier-CPP) repository.
+You can also see [Java](https://github.com/starlangsoftware/TurkishDeasciifier), [Python](https://github.com/starlangsoftware/TurkishDeasciifier-Py), [Cython](https://github.com/starlangsoftware/TurkishDeasciifier-Cy), [Swift](https://github.com/starlangsoftware/TurkishDeasciifier-Swift), [Js](https://github.com/starlangsoftware/TurkishDeasciifier-Js), [C++](https://github.com/starlangsoftware/TurkishDeasciifier-CPP), or [C](https://github.com/starlangsoftware/TurkishDeasciifier-C) repository.
 
 ## Requirements
 
