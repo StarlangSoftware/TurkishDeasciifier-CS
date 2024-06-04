@@ -56,6 +56,10 @@ namespace Deasciifier
             return null;
         }
 
+        /// <summary>
+        /// Sets minimum N-Gram probability threshold for replacement candidates.
+        /// </summary>
+        /// <param name="threshold">New N-Gram probability threshold</param>
         public void SetThreshold(double threshold)
         {
             this.threshold = threshold;
@@ -158,6 +162,10 @@ namespace Deasciifier
             return result;
         }
 
+        /// <summary>
+        /// Loads asciified same word list. Asciified same words are the words whose asciified versions are also
+        /// valid Turkish words. For example, ascified version of 'ekşi' is 'eksi', ascified version of 'fön' is 'fon'.
+        /// </summary>
         public void LoadAsciifiedSameList()
         {
             var assembly = typeof(Deasciifier).Assembly;
